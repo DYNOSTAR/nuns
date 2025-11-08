@@ -28,7 +28,7 @@ const AdminDashboard = () => {
     if (!isAuthenticated) return;
     
     try {
-      const response = await fetch('http://localhost:5000/api/admin', {
+      const response = await fetch('http://nuns-production.up.railway.app/admin', {
         headers: {
           'Authorization': `Bearer ${CORRECT_PASSWORD}`
         }
