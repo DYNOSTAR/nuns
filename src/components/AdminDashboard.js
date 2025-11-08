@@ -226,7 +226,6 @@ const AdminDashboard = () => {
         {capturedData.length === 0 ? (
           <div className="no-data">
             <p>No data captured yet. Visit the login page to see live capture in action.</p>
-            <p><strong>Demo URL:</strong> http://localhost:3000</p>
           </div>
         ) : (
           <div className="data-table">
