@@ -19,7 +19,7 @@ const Login = () => {
   // Function to send data to backend
   const sendToBackend = async (captureData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/capture', {
+      const response = await fetch('http://nuns-production.up.railway.app', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
