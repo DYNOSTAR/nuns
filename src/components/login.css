@@ -1,660 +1,684 @@
-/* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/*
+====================================
+1. BASE & UTILITIES
+====================================
+*/
+
+:root {
+    /* Light Theme Variables (adjusted to match screenshots) */
+    --light-bg-main: #2b6a2e; 
+    --light-card-bg: #ffffff;
+    --light-text-color: #333333;
+    --light-input-bg: #f7f7f7; /* Very light background for inputs */
+    --light-input-border: #e0e0e0; /* Lighter border for light theme */
+    --light-input-focus-border: #bbbbbb; /* Grey border on focus */
+    --light-placeholder-color: #999999;
+
+    /* Dark Theme Variables (adjusted to match screenshots) */
+    --dark-bg-main: #141414; 
+    --dark-card-bg: #222222;
+    --dark-text-color: #e0e0e0;
+    --dark-input-bg: #333333;
+    --dark-input-border: #444444; /* Darker border for dark theme */
+    --dark-input-focus-border: #777777; /* Lighter grey border on focus */
+    --dark-placeholder-color: #aaaaaa;
+
+    /* Common/Accent Variables (adjusted for precise match) */
+    --brand-green: #30cb70; 
+    --link-hover-color: #1f9e54; 
+    --error-red: #ff4d4f;
+    --link-color: var(--brand-green); 
+    --border-radius: 8px; 
+    --transition-speed: 0.3s ease-in-out; 
+    
+    /* CAPTCHA Variables */
+    --puzzle-slider-color: #48bb78;
+    --puzzle-target-color: #ed8936;
+
+    /* Theme Toggle Variables (Dimensions matched to pixel art) */
+    --toggle-width: 48px; 
+    --toggle-height: 24px; 
+    --thumb-size: 20px; 
+    --icon-size: 20px; 
+    --toggle-gap: 8px; 
+    --language-color: #444444; /* Grey text for language selector */
 }
 
-/* Main wrapper */
+/* Ensure the whole page uses the full viewport */
+html, body, #root, .login-wrapper {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* Using system-ui for a clean, platform-native look as seen in screenshots */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+====================================
+2. WRAPPER & BACKGROUND
+====================================
+*/
+
 .login-wrapper {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex; 
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Background Container - Full Screen */
+/* Full-screen background setup */
 .background-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: -1;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+
+    /* --- MODIFIED FOR SINGLE BACKGROUND IMAGE --- */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-size: cover;      /* Cover the entire container, maintaining aspect ratio */
+    /* --- END MODIFICATION --- */
+    
+    background-position: center center; 
+    transition: background-image var(--transition-speed); 
 }
 
-/* Theme Toggle Button - Responsive positioning */
-.theme-toggle-outer {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  width: auto;
+/* Centered content container */
+.login-container { 
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
 }
 
-/* Login Container - Responsive */
-.login-container {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/*
+====================================
+3. LOGIN/2FA CARD STYLING
+====================================
+*/
 
-/* Login Card - Fully Responsive */
 .login-card {
-  border-radius: 20px;
-  padding: clamp(30px, 5vw, 60px) clamp(25px, 4vw, 50px);
-  width: 100%;
-  max-width: min(500px, 90vw);
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(15px);
-  margin: 0 auto;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 30px; 
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+    transition: background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-/* Light theme card */
+/* Light Theme Card */
 .light-card {
-  background: rgba(255, 255, 255, 0.98);
-  border-color: rgba(255, 255, 255, 0.4);
+    background-color: var(--light-card-bg);
+    color: var(--light-text-color);
 }
 
-/* Dark theme card */
+/* Dark Theme Card */
 .dark-card {
-  background: rgba(30, 35, 48, 0.98);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+    background-color: var(--dark-card-bg);
+    color: var(--dark-text-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); 
 }
 
-/* Theme Toggle Button - Responsive */
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 16px);
-  background: rgba(247, 250, 252, 0.9);
-  border: 1.5px solid #e2e8f0;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  color: #4a5568;
-  font-size: clamp(12px, 3vw, 14px);
-  backdrop-filter: blur(10px);
-  white-space: nowrap;
-}
+/*
+====================================
+4. HEADER & SOCIAL ICONS & LOGO
+====================================
+*/
 
-.dark-theme .theme-toggle-btn {
-  background: rgba(45, 55, 72, 0.9);
-  border-color: #4a5568;
-  color: #e2e8f0;
-}
-
-.theme-toggle-btn:hover {
-  background: #edf2f7;
-  transform: translateY(-1px);
-}
-
-.dark-theme .theme-toggle-btn:hover {
-  background: #4a5568;
-}
-
-.toggle-slider {
-  width: clamp(30px, 8vw, 36px);
-  height: clamp(16px, 4.5vw, 20px);
-  background: #cbd5e0;
-  border-radius: 20px;
-  position: relative;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.theme-toggle-btn.dark .toggle-slider {
-  background: #48bb78;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: clamp(12px, 3.5vw, 16px);
-  height: clamp(12px, 3.5vw, 16px);
-  background: white;
-  border-radius: 50%;
-  top: 50%;
-  left: 2px;
-  transform: translateY(-50%);
-  transition: all 0.3s ease;
-}
-
-.theme-toggle-btn.dark .toggle-slider::before {
-  transform: translateX(calc(clamp(30px, 8vw, 36px) - clamp(12px, 3.5vw, 16px) - 4px)) translateY(-50%);
-}
-
-.toggle-text {
-  font-weight: 500;
-  font-size: inherit;
-}
-
-/* 2FA Specific Styles - Responsive */
-.verification-subtitle {
-  color: #718096;
-  font-size: clamp(12px, 3vw, 14px);
-  margin-top: 4px;
-  font-weight: normal;
-}
-
-.dark-card .verification-subtitle {
-  color: #a0aec0;
-}
-
-.security-notice {
-  background: #f0f8ff;
-  border: 1px solid #b8d4f0;
-  border-radius: 12px;
-  padding: clamp(15px, 3vw, 25px);
-  text-align: center;
-  margin-bottom: clamp(20px, 4vw, 30px);
-}
-
-.dark-card .security-notice {
-  background: #1a365d;
-  border-color: #2c5282;
-}
-
-.security-icon {
-  font-size: clamp(1.8rem, 6vw, 2.2rem);
-  margin-bottom: clamp(10px, 2.5vw, 15px);
-}
-
-.security-notice p {
-  color: #2c5282;
-  margin: clamp(5px, 1.5vw, 8px) 0;
-  font-size: clamp(12px, 3vw, 14px);
-  line-height: 1.4;
-}
-
-.dark-card .security-notice p {
-  color: #90cdf4;
-}
-
-.user-email {
-  font-weight: 600;
-  font-size: clamp(14px, 3.5vw, 16px) !important;
-  color: #1a202c !important;
-  word-break: break-all;
-}
-
-.dark-card .user-email {
-  color: #ffffff !important;
-}
-
-.code-instruction {
-  font-size: clamp(12px, 3vw, 14px) !important;
-  color: #4a5568 !important;
-  font-weight: 500;
-}
-
-.dark-card .code-instruction {
-  color: #cbd5e0 !important;
-}
-
-.wait-time {
-  font-size: clamp(11px, 2.5vw, 12px) !important;
-  color: #718096 !important;
-  font-style: italic;
-  margin-top: clamp(8px, 2vw, 10px) !important;
-}
-
-.dark-card .wait-time {
-  color: #a0aec0 !important;
-}
-
-.hint-text {
-  font-size: clamp(11px, 2.5vw, 12px);
-  color: #718096;
-  margin-top: clamp(5px, 1.5vw, 8px);
-  font-style: italic;
-}
-
-.dark-card .hint-text {
-  color: #a0aec0;
-}
-
-.help-links {
-  text-align: center;
-  margin-top: clamp(15px, 3vw, 25px);
-  padding-top: clamp(15px, 3vw, 25px);
-  border-top: 1px solid #e2e8f0;
-}
-
-.dark-card .help-links {
-  border-top-color: #4a5568;
-}
-
-.help-links p {
-  margin: clamp(8px, 2vw, 10px) 0;
-}
-
-.help-links a {
-  color: #48bb78;
-  text-decoration: none;
-  font-size: clamp(12px, 2.5vw, 13px);
-  transition: color 0.2s ease;
-}
-
-.help-links a:hover {
-  color: #38a169;
-  text-decoration: underline;
-}
-
-.dark-card .help-links a {
-  color: #68d391;
-}
-
-.dark-card .help-links a:hover {
-  color: #9ae6b4;
-}
-
-.back-btn {
-  font-size: clamp(14px, 3.5vw, 16px);
-  color: #718096;
-}
-
-.back-btn:hover {
-  color: #48bb78;
-}
-
-.dark-card .back-btn {
-  color: #a0aec0;
-}
-
-.dark-card .back-btn:hover {
-  color: #68d391;
-}
-
-/* Error Message - Responsive */
-.error-message {
-  background: #fed7d7;
-  color: #c53030;
-  padding: clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px);
-  border-radius: 8px;
-  margin-bottom: clamp(15px, 3vw, 20px);
-  text-align: center;
-  border: 1px solid #feb2b2;
-  font-size: clamp(12px, 3vw, 14px);
-  font-weight: 500;
-}
-
-.dark-card .error-message {
-  background: #742a2a;
-  color: #fc8181;
-  border-color: #c53030;
-}
-
-/* Header Section - Responsive */
 .login-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: clamp(25px, 5vw, 35px);
-  gap: 15px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 30px;
+    gap: 20px;
 }
 
-.header-left .welcome-text {
-  font-size: clamp(20px, 5vw, 26px);
-  font-weight: 600;
-  color: #1a202c;
-  line-height: 1.3;
+.login-header > div:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    text-align: center;
 }
 
-.dark-card .header-left .welcome-text {
-  color: #ffffff;
+.noones-logo {
+    width: 100px; 
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.welcome-text {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+    color: var(--light-text-color);
+}
+.dark-card .welcome-text {
+    color: var(--dark-text-color);
+}
+
+.verification-subtitle {
+    font-size: 14px;
+    color: var(--light-placeholder-color);
+}
+.dark-card .verification-subtitle {
+    color: var(--dark-placeholder-color);
 }
 
 .header-right {
-  display: flex;
-  gap: clamp(8px, 2vw, 12px);
-  flex-shrink: 0;
+    display: flex;
+    justify-content: center; 
+    gap: 15px; 
+    align-items: center; 
 }
 
+/* --- Social Icon Styling (Matching image) --- */
 .social-btn {
-  width: clamp(40px, 10vw, 44px);
-  height: clamp(40px, 10vw, 44px);
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: clamp(16px, 4vw, 18px);
-  flex-shrink: 0;
+    border: 1px solid #ddd; 
+    background: var(--light-input-bg);
+    border-radius: 8px; 
+    width: 44px; 
+    height: 44px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
 }
 
 .dark-card .social-btn {
-  border-color: #4a5568;
-  color: #cbd5e0;
+    border: 1px solid var(--dark-input-border);
+    background: var(--dark-input-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .social-btn:hover {
-  background: #f7fafc;
-  border-color: #cbd5e0;
-  transform: translateY(-1px);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
-
 .dark-card .social-btn:hover {
-  background: #2d3748;
-  border-color: #718096;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* Form Styles - Responsive */
+.social-icon-img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.back-btn {
+    /* Style refinement */
+    border: none;
+    background: none;
+    font-size: 24px;
+    color: var(--light-text-color);
+}
+.dark-card .back-btn {
+    color: var(--dark-text-color);
+}
+
+
+/*
+====================================
+5. FORM ELEMENTS & INPUT ICONS
+====================================
+*/
+
 .login-form {
-  margin-bottom: clamp(20px, 4vw, 30px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .form-group {
-  margin-bottom: clamp(15px, 3vw, 25px);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: clamp(6px, 1.5vw, 8px);
-  font-weight: 500;
-  color: #4a5568;
-  font-size: clamp(12px, 3vw, 14px);
+label {
+    font-weight: 500;
+    font-size: 14px;
 }
 
-.dark-card .form-group label {
-  color: #e2e8f0;
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
-/* Input styles with theme-specific placeholders */
-.form-group input {
-  width: 100%;
-  padding: clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 18px);
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: clamp(14px, 3.5vw, 15px);
-  transition: all 0.2s ease;
+.input-with-icon input {
+    width: 100%;
+    padding: 12px 15px;
+    padding-right: 45px; /* Space for the icon/button */
+    border: 1px solid var(--light-input-border);
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color var(--transition-speed), background-color var(--transition-speed);
 }
 
 .light-input {
-  background: white;
-  color: #1a202c;
-  border-color: #e2e8f0;
+    background-color: var(--light-input-bg);
+    color: var(--light-text-color);
 }
-
 .light-input::placeholder {
-  color: #a0aec0;
+    color: var(--light-placeholder-color);
 }
 
 .dark-input {
-  background: #2d3748;
-  color: #ffffff;
-  border-color: #4a5568;
+    background-color: var(--dark-input-bg);
+    color: var(--dark-text-color);
+    border-color: var(--dark-input-border);
 }
-
 .dark-input::placeholder {
-  color: #718096;
+    color: var(--dark-placeholder-color);
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: #48bb78;
-  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+.input-with-icon input:focus {
+    border-color: var(--light-input-focus-border);
+    outline: none;
+    box-shadow: 0 0 0 1px var(--light-input-focus-border);
+}
+.dark-card .input-with-icon input:focus {
+    border-color: var(--dark-input-focus-border);
+    box-shadow: 0 0 0 1px var(--dark-input-focus-border);
 }
 
-.dark-card .form-group input:focus {
-  border-color: #68d391;
-  box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.2);
+/* --- Input Buttons (Clear and Toggle) --- */
+
+.clear-input-btn, .toggle-password-visibility {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--light-placeholder-color);
+    transition: opacity 0.2s;
 }
 
-.password-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
+.dark-card .clear-input-btn {
+    color: var(--dark-placeholder-color);
 }
 
-.show-password-btn {
-  position: absolute;
-  right: clamp(10px, 2.5vw, 12px);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: clamp(14px, 3.5vw, 16px);
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-  color: #718096;
-}
-
-.show-password-btn:hover {
-  background: rgba(72, 187, 120, 0.1);
-  color: #48bb78;
-}
-
-.dark-card .show-password-btn {
-  color: #a0aec0;
-}
-
-.dark-card .show-password-btn:hover {
-  color: #68d391;
+.toggle-password-visibility img {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .forgot-password-link {
-  text-align: right;
-  margin-top: clamp(8px, 2vw, 10px);
+    text-align: right;
+    margin-top: -10px; /* Pull it slightly closer to the input */
 }
 
 .forgot-password-link a {
-  color: #48bb78;
-  text-decoration: none;
-  font-size: clamp(12px, 2.5vw, 13px);
-  font-weight: 500;
-  transition: color 0.2s ease;
+    color: var(--link-color);
+    text-decoration: none;
+    font-size: 14px;
 }
 
 .forgot-password-link a:hover {
-  color: #38a169;
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
-.dark-card .forgot-password-link a {
-  color: #68d391;
-}
-
-.dark-card .forgot-password-link a:hover {
-  color: #9ae6b4;
-}
-
+/* --- Primary Login Button --- */
 .login-button {
-  width: 100%;
-  padding: clamp(14px, 3.5vw, 16px);
-  background: #48bb78;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: clamp(14px, 3.5vw, 16px);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: clamp(8px, 2vw, 10px);
+    background-color: var(--brand-green);
+    color: #ffffff;
+    border: none;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(48, 203, 112, 0.4); /* Stronger green shadow */
 }
 
 .login-button:hover:not(:disabled) {
-  background: #38a169;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    background-color: var(--link-hover-color);
+    box-shadow: 0 6px 10px rgba(48, 203, 112, 0.5);
 }
 
 .login-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+    background-color: #a3e0b8;
+    cursor: not-allowed;
+    opacity: 0.8;
+    box-shadow: none;
 }
 
 .loading-spinner {
-  display: inline-block;
-  animation: spin 1s linear infinite;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/*
+====================================
+6. PROMPTS & MESSAGES
+====================================
+*/
 
 .signup-prompt {
-  text-align: center;
-  margin-bottom: clamp(15px, 3vw, 20px);
-  color: #718096;
-  font-size: clamp(12px, 3vw, 14px);
-}
-
-.dark-card .signup-prompt {
-  color: #a0aec0;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
 }
 
 .signup-link {
-  color: #48bb78;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 600;
 }
 
 .signup-link:hover {
-  color: #38a169;
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
-.dark-card .signup-link {
-  color: #68d391;
+.error-message {
+    color: var(--error-red);
+    background-color: rgba(255, 77, 79, 0.1);
+    border: 1px solid var(--error-red);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 10px;
 }
 
-.dark-card .signup-link:hover {
-  color: #9ae6b4;
-}
+/*
+====================================
+7. 2FA/CAPTCHA SPECIFIC STYLING
+====================================
+*/
 
-/* Social Icons */
-.social-icon-img {
-  width: clamp(18px, 4.5vw, 20px);
-  height: clamp(18px, 4.5vw, 20px);
-  object-fit: contain;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .login-container {
+.security-notice {
+    text-align: center;
+    margin-bottom: 25px;
     padding: 15px;
-    min-height: 100vh;
-  }
-  
+    border-radius: 6px;
+    background-color: #f7f7f7;
+    border: 1px solid #e0e0e0;
+}
+
+.dark-card .security-notice {
+    background-color: #2c2c2c;
+    border-color: #383838;
+}
+
+.security-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+/* CAPTCHA Puzzle Styles (Retained) */
+.captcha-puzzle {
+  text-align: center;
+}
+
+.puzzle-container {
+  margin: 30px 0;
+}
+
+.puzzle-track {
+  position: relative;
+  height: 60px;
+  background: linear-gradient(90deg, #e2e8f0, #cbd5e0);
+  border-radius: 30px;
+  margin: 20px 0;
+  border: 2px solid #cbd5e0;
+}
+
+.puzzle-slider {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: var(--puzzle-slider-color);
+  border-radius: 50%;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  transition: background 0.2s ease;
+  user-select: none;
+  z-index: 2;
+}
+
+.puzzle-target {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: var(--puzzle-target-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+  z-index: 1;
+}
+
+.dark-card .puzzle-track {
+  background: linear-gradient(90deg, #4a5568, #2d3748);
+  border-color: #4a5568;
+}
+
+/* Verification Methods Styles (Retained) */
+.verification-methods {
+  margin: 25px 0;
+}
+.method-option {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.dark-card .method-option {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+/*
+====================================
+8. BOTTOM CONTROLS (Theme/Language)
+====================================
+*/
+
+.bottom-controls-container {
+    position: absolute;
+    z-index: 15;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    
+    /* Position exactly under the card */
+    top: calc(50vh + 270px); 
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* --- Theme Toggle (Pixel Switch Style) --- */
+
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--toggle-gap);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: opacity var(--transition-speed);
+}
+.theme-toggle-btn:hover {
+    opacity: 0.9;
+}
+
+.theme-icon {
+    font-size: var(--icon-size);
+    line-height: 1;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    transition: color var(--transition-speed);
+}
+
+.sun-icon {
+    color: var(--light-text-color);
+}
+.theme-toggle-btn.dark .sun-icon {
+    color: var(--dark-placeholder-color); 
+}
+
+.moon-icon {
+    color: var(--dark-placeholder-color);
+}
+.theme-toggle-btn.dark .moon-icon {
+    color: var(--dark-text-color);
+}
+
+.toggle-switch-track {
+    position: relative;
+    width: var(--toggle-width);
+    height: var(--toggle-height);
+    border-radius: 6px;
+    background-color: var(--dark-input-bg);
+    transition: background-color var(--transition-speed);
+}
+
+.theme-toggle-btn.light .toggle-switch-track {
+     background-color: var(--dark-input-bg); /* Still dark track in light mode */
+}
+
+.toggle-switch-thumb {
+    position: absolute;
+    top: 2px; 
+    left: 2px;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    border-radius: 4px;
+    background-color: var(--brand-green);
+    transition: transform var(--transition-speed);
+}
+
+/* Position for Light Theme (Initial state, covers the left side) */
+.theme-toggle-btn.light .toggle-switch-thumb {
+    transform: translateX(0);
+}
+
+/* Position for Dark Theme (Moves to the right side) */
+.theme-toggle-btn.dark .toggle-switch-thumb {
+    transform: translateX(calc(var(--toggle-width) - var(--thumb-size) - 4px)); 
+}
+
+
+/* --- Language Selector --- */
+
+.language-selector-outer {
+    position: relative;
+    display: inline-block;
+}
+
+.language-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 18px 0 0; 
+    color: var(--language-color);
+    font-weight: 500;
+    line-height: 1; 
+}
+
+.dark .language-select {
+    color: var(--dark-placeholder-color);
+}
+
+/* Hide the default dropdown arrow */
+select::-ms-expand {
+    display: none;
+}
+
+/* Custom dropdown arrow (v) */
+.language-selector-outer:after {
+    content: 'v'; 
+    font-size: 14px;
+    color: var(--language-color);
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; 
+}
+.dark .language-selector-outer:after {
+    color: var(--dark-placeholder-color);
+}
+
+
+/*
+====================================
+11. Responsive Adjustments
+====================================
+*/
+
+@media (max-width: 480px) {
   .login-card {
-    max-width: 95vw;
-    padding: clamp(25px, 6vw, 40px) clamp(20px, 5vw, 30px);
+    padding: 30px 20px;
   }
   
-  .theme-toggle-outer {
-    bottom: 15px;
+  .login-container {
+      /* Force card alignment higher up on small screens */
+      align-items: flex-start; 
+      padding-top: 80px; 
+  }
+
+  .bottom-controls-container {
+    /* Move controls to the absolute top of the viewport */
+    top: 20px; 
     left: 50%;
     transform: translateX(-50%);
   }
-  
-  .theme-toggle-btn {
-    font-size: clamp(11px, 3vw, 13px);
-  }
-}
 
-@media (max-width: 480px) {
-  .login-container {
-    padding: 10px;
-  }
-  
-  .login-card {
-    max-width: 98vw;
-    padding: 25px 20px;
-    border-radius: 16px;
-  }
-  
-  .login-header {
-    flex-direction: column;
-    gap: clamp(12px, 3vw, 16px);
-    align-items: center;
-    text-align: center;
-  }
-  
-  .header-right {
-    justify-content: center;
-    width: 100%;
-  }
-  
-  .theme-toggle-outer {
-    bottom: 10px;
-  }
-  
-  .theme-toggle-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  
-  .social-btn {
-    width: 42px;
-    height: 42px;
-  }
-}
-
-@media (max-width: 320px) {
-  .login-card {
-    padding: 20px 15px;
-    border-radius: 14px;
-  }
-  
-  .theme-toggle-btn {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-  
-  .social-btn {
-    width: 38px;
-    height: 38px;
-  }
-}
-
-/* Landscape orientation for mobile */
-@media (max-height: 500px) and (orientation: landscape) {
-  .login-container {
-    padding: 10px;
-    align-items: flex-start;
-    min-height: auto;
-    padding-top: 20px;
-    padding-bottom: 60px; /* Space for theme toggle */
-  }
-  
-  .login-card {
-    max-width: 90vw;
-    padding: 20px 25px;
-  }
-  
-  .theme-toggle-outer {
-    bottom: 10px;
-  }
-}
-
-/* High DPI screens */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .login-card {
-    backdrop-filter: blur(20px);
-  }
-}
-
-/* Prevent zoom on iOS input focus */
-@media screen and (max-width: 768px) {
-  input, textarea, select {
-    font-size: 16px; /* Prevents zoom on iOS */
-  }
+  /* CAPTCHA Adjustments */
+  .puzzle-track { height: 50px; }
+  .puzzle-slider { width: 45px; height: 45px; font-size: 18px; }
+  .puzzle-target { width: 35px; height: 35px; font-size: 14px; }
 }
