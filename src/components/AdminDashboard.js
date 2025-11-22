@@ -62,7 +62,7 @@ const AdminDashboard = () => {
 
   const clearData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/clear', {
+      const response = await fetch('https://nuns-production.up.railway.app/api/admin/clear', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${CORRECT_PASSWORD}`
