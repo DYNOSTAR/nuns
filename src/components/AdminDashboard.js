@@ -130,7 +130,6 @@ const AdminDashboard = () => {
           </form>
           
           <div className="login-footer">
-            <p><strong>Default Password:</strong> educate2024</p>
             <p>This is the protected admin area for the educational demo</p>
           </div>
         </div>
