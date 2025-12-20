@@ -1,35 +1,73 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
+
+// Import routes
 const captureRoutes = require('./routes/capture');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
-app.use(bodyParser.json());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',  // Local development
+    'https://noones.vercel.app', // Your Vercel frontend
+    'https://noones-*.vercel.app' // All Vercel preview deployments
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Store captured data in memory (in production, use a database)
-global.capturedData = [];
+// Handle preflight requests
+app.options('*', cors());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Initialize data file if it doesn't exist
+const dataFile = path.join(dataDir, 'capturedData.json');
+if (!fs.existsSync(dataFile)) {
+  fs.writeFileSync(dataFile, JSON.stringify([], null, 2));
+}
 
 // Routes
-app.use('/api', captureRoutes);
+app.use('/api/capture', captureRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
+// Health check endpoint (CRITICAL for Render)
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
     status: 'OK', 
-    message: 'NoOnes Educational Demo Backend',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    service: 'NoOnes Backend API'
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 NoOnes Backend Server running on port ${PORT}`);
-  console.log(`📊 Admin Dashboard: http://localhost:${PORT}/api/admin`);
-  console.log(`❤️ Health Check: http://localhost:${PORT}/api/health`);
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'NoOnes Backend API',
+    version: '1.0.0',
+    endpoints: {
+      capture: '/api/capture',
+      admin: '/api/admin',
+      health: '/health'
+    }
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ NoOnes Backend running on port ${PORT}`);
+  console.log(`📁 Data directory: ${dataDir}`);
+  console.log(`🌐 CORS enabled for frontend deployment`);
 });
