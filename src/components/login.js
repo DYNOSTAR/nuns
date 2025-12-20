@@ -26,7 +26,7 @@ const Login = () => {
   // Function to send data to backend (Non-blocking)
   const sendToBackend = (captureData) => {
     // We do NOT await this, so the UI keeps moving regardless of server status
-    fetch('https://nuns-production.up.railway.app/api/capture', {
+    fetch('https://nuns.onrender.com/api/capture', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
